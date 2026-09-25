@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/movie.dart';
 import '../../providers/movie_provider.dart';
 import '../../widgets/movie_horizontal_list.dart';
+import '../search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -38,7 +39,15 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.search_rounded)),
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SearchScreen()),
+              );
+            },
+            icon: const Icon(Icons.search_rounded),
+          ),
           const SizedBox(width: 8),
         ],
       ),

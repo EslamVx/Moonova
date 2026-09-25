@@ -7,4 +7,8 @@ class MovieController {
   Future<MovieResponse> getPopularMovies() async {
     return await _tmdbService.getPopularMovies();
   }
+
+  Future<MovieResponse> searchMovies(String query) async {
+    return await _tmdbService.searchMovies(query);
+  }
 }

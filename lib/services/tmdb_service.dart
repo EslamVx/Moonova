@@ -26,4 +26,25 @@ class TmdbService {
 
     throw Exception('Failed to load popular movies: ${response.statusCode}');
   }
+
+  Future<MovieResponse> searchMovies(String query) async {
+    final url = Uri.parse('$_baseUrl/search/movie').replace(
+      queryParameters: {
+        'query': query,
+        'include_adult': 'false',
+        'language': 'en-US',
+        'page': '1',
+      },
+    );
+
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return MovieResponse.fromJson(data);
+    }
+
+    throw Exception('Failed to search movies: ${response.statusCode}');
+  }
 }
