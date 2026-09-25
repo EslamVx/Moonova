@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "1910279814",
+    "project_id": "moonova-f21ce",
+    "storage_bucket": "moonova-f21ce.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1910279814:android:22d68dfce3decc9787cb07",
+        "android_client_info": {
+          "package_name": "com.example.moonova"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1910279814-m8eke20e3cuoj3le0u7lh4ijfmfj0e95.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.moonova",
+            "certificate_hash": "3b26ed6b088ba95e65b0e78f4b11c06f05f7dd1f"
+          }
+        },
+        {
+          "client_id": "1910279814-jqg5eoq5gv700mb44sstk0jmenjuo3j5.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXQilP3EtV2T8X0Js6Ags34x2tI8Nwchk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1910279814-jqg5eoq5gv700mb44sstk0jmenjuo3j5.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "1910279814-4gc6i0fde7earbiviq20u4mjo8bbfrfh.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.moonova"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

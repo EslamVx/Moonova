@@ -14,14 +14,8 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
 
-  void _searchMovies() {
-    final query = _searchController.text.trim();
-
-    if (query.isEmpty) {
-      return;
-    }
-
-    context.read<MovieProvider>().searchMovies(query);
+  void _search() {
+    context.read<MovieProvider>().searchMovies(_searchController.text);
   }
 
   @override
@@ -35,29 +29,33 @@ class _SearchScreenState extends State<SearchScreen> {
     final provider = context.watch<MovieProvider>();
 
     return Scaffold(
-      appBar: AppBar(
-        title: TextField(
-          controller: _searchController,
-          autofocus: true,
-          textInputAction: TextInputAction.search,
-          onSubmitted: (_) => _searchMovies(),
-          decoration: const InputDecoration(
-            hintText: 'Search for a movie...',
-            border: InputBorder.none,
-          ),
+      appBar: AppBar(title: const Text('Search Movies')),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            TextField(
+              controller: _searchController,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _search(),
+              decoration: InputDecoration(
+                hintText: 'Search for a movie...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  onPressed: _search,
+                  icon: const Icon(Icons.arrow_forward),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Expanded(child: _buildResults(provider)),
+          ],
         ),
-        actions: [
-          IconButton(
-            onPressed: _searchMovies,
-            icon: const Icon(Icons.search_rounded),
-          ),
-        ],
       ),
-      body: _buildBody(provider),
     );
   }
 
-  Widget _buildBody(MovieProvider provider) {
+  Widget _buildResults(MovieProvider provider) {
     if (provider.isSearching) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -66,19 +64,22 @@ class _SearchScreenState extends State<SearchScreen> {
       return Center(child: Text(provider.searchErrorMessage!));
     }
 
-    if (provider.searchResults.isEmpty) {
+    if (_searchController.text.trim().isEmpty) {
       return const Center(child: Text('Search for a movie'));
     }
 
+    if (provider.searchResults.isEmpty) {
+      return const Center(child: Text('No movies found'));
+    }
+
     return GridView.builder(
-      padding: const EdgeInsets.all(20),
+      itemCount: provider.searchResults.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 20,
-        childAspectRatio: 150 / 290,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.65,
       ),
-      itemCount: provider.searchResults.length,
       itemBuilder: (context, index) {
         return MovieCard(movie: provider.searchResults[index]);
       },
