@@ -3,11 +3,15 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../models/movie.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/movie_provider.dart';
 import '../../widgets/movie_horizontal_list.dart';
 import '../auth/login_screen.dart';
-import '../search/search_screen.dart';
+import '../library/library_screen.dart';
 import '../movie_details/movie_details_screen.dart';
+import '../movie_list/movie_list_screen.dart';
+import '../profile/profile_screen.dart';
+import '../search/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -37,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<MovieProvider>();
-
+    final authProvider = context.watch<AuthProvider>();
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -45,6 +49,15 @@ class _HomeScreenState extends State<HomeScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LibraryScreen()),
+              );
+            },
+            icon: const Icon(Icons.video_library_outlined),
+          ),
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -58,16 +71,42 @@ class _HomeScreenState extends State<HomeScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
+                MaterialPageRoute(
+                  builder: (_) => authProvider.isAuthenticated
+                      ? const ProfileScreen()
+                      : const LoginScreen(),
+                ),
               );
             },
-            icon: const Icon(Icons.person_outline_rounded),
+            icon: authProvider.isAuthenticated
+                ? CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: Text(
+                      _getUserInitial(authProvider.user?.displayName),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : const Icon(Icons.person_outline_rounded),
           ),
           const SizedBox(width: 8),
         ],
       ),
+
       body: _buildBody(provider),
     );
+  }
+
+  String _getUserInitial(String? name) {
+    if (name != null && name.trim().isNotEmpty) {
+      return name.trim()[0].toUpperCase();
+    }
+
+    return 'U';
   }
 
   Widget _buildBody(MovieProvider provider) {
@@ -111,10 +150,23 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Popular Movies',
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  Text(
-                    'See all',
-                    style: Theme.of(context).textTheme.labelLarge
-                        ?.copyWith(color: AppColors.primary),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MovieListScreen(
+                            title: 'Popular Movies',
+                            movies: provider.popularMovies,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'See all',
+                      style: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(color: AppColors.primary),
+                    ),
                   ),
                 ],
               ),
@@ -126,9 +178,32 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 28),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Text(
-                'Trending Now',
-                style: Theme.of(context).textTheme.headlineSmall,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Trending Now',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MovieListScreen(
+                            title: 'Trending Now',
+                            movies: provider.trendingMovies,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'See all',
+                      style: Theme.of(context).textTheme.labelLarge
+                          ?.copyWith(color: AppColors.primary),
+                    ),
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 14),

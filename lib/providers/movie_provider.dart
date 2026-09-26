@@ -12,6 +12,8 @@ class MovieProvider extends ChangeNotifier {
   List<Movie> _searchResults = [];
   List<Genre> _genres = [];
 
+  final Map<int, Movie> _movieCache = {};
+
   Movie? _selectedMovie;
 
   bool _isLoading = false;
@@ -51,6 +53,10 @@ class MovieProvider extends ChangeNotifier {
       final response = await _controller.getPopularMovies();
 
       _popularMovies = response.movies;
+
+      for (final movie in response.movies) {
+        _movieCache[movie.id] = movie;
+      }
     } catch (e) {
       _errorMessage = e.toString();
     } finally {
@@ -65,6 +71,10 @@ class MovieProvider extends ChangeNotifier {
       final response = await _controller.getTrendingMovies();
 
       _trendingMovies = response.movies;
+
+      for (final movie in response.movies) {
+        _movieCache[movie.id] = movie;
+      }
     } catch (e) {
       _trendingMovies = [];
     }
@@ -87,6 +97,10 @@ class MovieProvider extends ChangeNotifier {
       final response = await _controller.searchMovies(query.trim());
 
       _searchResults = response.movies;
+
+      for (final movie in response.movies) {
+        _movieCache[movie.id] = movie;
+      }
     } catch (e) {
       _searchErrorMessage = e.toString();
     } finally {
@@ -127,6 +141,8 @@ class MovieProvider extends ChangeNotifier {
     try {
       _selectedMovie = await _controller.getMovieDetails(movieId);
 
+      _movieCache[movieId] = _selectedMovie!;
+
       await loadGenres();
     } catch (e) {
       _detailsErrorMessage = e.toString();
@@ -135,6 +151,28 @@ class MovieProvider extends ChangeNotifier {
 
       notifyListeners();
     }
+  }
+
+  Future<Movie?> fetchMovie(int movieId) async {
+    final cachedMovie = _movieCache[movieId];
+
+    if (cachedMovie != null) {
+      return cachedMovie;
+    }
+
+    try {
+      final movie = await _controller.getMovieDetails(movieId);
+
+      _movieCache[movieId] = movie;
+
+      return movie;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Movie? getMovieFromCache(int movieId) {
+    return _movieCache[movieId];
   }
 
   String getGenreName(int genreId) {

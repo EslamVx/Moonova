@@ -31,7 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Search Movies')),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
         child: Column(
           children: [
             TextField(
@@ -73,12 +73,13 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 24),
       itemCount: provider.searchResults.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 16,
-        childAspectRatio: 0.65,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 24,
+        mainAxisExtent: 325,
       ),
       itemBuilder: (context, index) {
         return MovieCard(movie: provider.searchResults[index]);

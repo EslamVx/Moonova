@@ -17,16 +17,7 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => MovieProvider()),
-        ChangeNotifierProvider(create: (_) => MovieListProvider()),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
-      ],
-      child: const MoonovaApp(),
-    ),
-  );
+  runApp(const MoonovaApp());
 }
 
 class MoonovaApp extends StatelessWidget {
@@ -34,13 +25,20 @@ class MoonovaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Moonova',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const HomeScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => MovieProvider()),
+        ChangeNotifierProvider(create: (_) => MovieListProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Moonova',
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        home: const HomeScreen(),
+      ),
     );
   }
 }

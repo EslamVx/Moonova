@@ -6,8 +6,9 @@ import '../screens/movie_details/movie_details_screen.dart';
 
 class MovieCard extends StatelessWidget {
   final Movie movie;
+  final double? width;
 
-  const MovieCard({super.key, required this.movie});
+  const MovieCard({super.key, required this.movie, this.width});
 
   @override
   Widget build(BuildContext context) {
@@ -21,14 +22,14 @@ class MovieCard extends StatelessWidget {
         );
       },
       child: SizedBox(
-        width: 150,
+        width: width,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: AspectRatio(
-                aspectRatio: 2 / 3,
+            AspectRatio(
+              aspectRatio: 2 / 3,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
                 child: movie.posterPath != null
                     ? Image.network(
                         'https://image.tmdb.org/t/p/w500${movie.posterPath}',
@@ -49,7 +50,7 @@ class MovieCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               movie.title,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.titleSmall,
             ),

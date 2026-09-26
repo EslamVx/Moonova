@@ -18,7 +18,7 @@ class MovieHorizontalList extends StatelessWidget {
         itemCount: movies.length,
         separatorBuilder: (_, index) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
-          return MovieCard(movie: movies[index]);
+          return MovieCard(movie: movies[index], width: 150);
         },
       ),
     );
