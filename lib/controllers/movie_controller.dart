@@ -30,4 +30,8 @@ class MovieController {
   Future<List<Cast>> getMovieCast(int movieId) async {
     return await _tmdbService.getMovieCast(movieId);
   }
+
+  Future<MovieResponse> getMovieRecommendations(int movieId) async {
+    return await _tmdbService.getMovieRecommendations(movieId);
+  }
 }

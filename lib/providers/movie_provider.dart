@@ -11,6 +11,7 @@ class MovieProvider extends ChangeNotifier {
   List<Movie> _popularMovies = [];
   List<Movie> _trendingMovies = [];
   List<Movie> _searchResults = [];
+  List<Movie> _recommendations = [];
   List<Genre> _genres = [];
   List<Cast> _movieCast = [];
 
@@ -20,6 +21,7 @@ class MovieProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isSearching = false;
+  bool _isRecommendationsLoading = false;
   bool _isLoadingGenres = false;
   bool _isLoadingDetails = false;
   bool _isCastLoading = false;
@@ -33,6 +35,7 @@ class MovieProvider extends ChangeNotifier {
   List<Movie> get popularMovies => _popularMovies;
   List<Movie> get trendingMovies => _trendingMovies;
   List<Movie> get searchResults => _searchResults;
+  List<Movie> get recommendations => _recommendations;
   List<Genre> get genres => _genres;
   List<Cast> get movieCast => _movieCast;
 
@@ -40,6 +43,7 @@ class MovieProvider extends ChangeNotifier {
 
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
+  bool get isRecommendationsLoading => _isRecommendationsLoading;
   bool get isLoadingGenres => _isLoadingGenres;
   bool get isLoadingDetails => _isLoadingDetails;
   bool get isCastLoading => _isCastLoading;
@@ -178,6 +182,28 @@ class MovieProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> loadMovieRecommendations(int movieId) async {
+    _isRecommendationsLoading = true;
+
+    notifyListeners();
+
+    try {
+      final response = await _controller.getMovieRecommendations(movieId);
+
+      _recommendations = response.movies;
+
+      for (final movie in response.movies) {
+        _movieCache[movie.id] = movie;
+      }
+    } catch (e) {
+      _recommendations = [];
+    } finally {
+      _isRecommendationsLoading = false;
+
+      notifyListeners();
+    }
+  }
+
   Future<Movie?> fetchMovie(int movieId) async {
     final cachedMovie = _movieCache[movieId];
 
@@ -217,6 +243,7 @@ class MovieProvider extends ChangeNotifier {
   void clearSelectedMovie() {
     _selectedMovie = null;
     _movieCast = [];
+    _recommendations = [];
     _castError = null;
     _detailsErrorMessage = null;
 

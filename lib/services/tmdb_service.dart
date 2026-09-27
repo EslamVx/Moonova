@@ -101,4 +101,20 @@ class TmdbService {
 
     throw Exception('Failed to load movie cast: ${response.statusCode}');
   }
+
+  Future<MovieResponse> getMovieRecommendations(int movieId) async {
+    final url = Uri.parse('$_baseUrl/movie/$movieId/recommendations');
+
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return MovieResponse.fromJson(data);
+    }
+
+    throw Exception(
+      'Failed to load movie recommendations: ${response.statusCode}',
+    );
+  }
 }

@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../models/movie.dart';
 import '../../providers/movie_list_provider.dart';
 import '../../providers/movie_provider.dart';
+import '../../widgets/movie_card.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
   final Movie movie;
@@ -24,6 +25,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MovieProvider>().loadMovieDetails(widget.movie.id);
       context.read<MovieProvider>().loadMovieCast(widget.movie.id);
+      context.read<MovieProvider>().loadMovieRecommendations(widget.movie.id);
 
       final user = FirebaseAuth.instance.currentUser;
 
@@ -152,6 +154,14 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                 ),
                 const SizedBox(height: 12),
                 _buildCast(movieProvider),
+                const SizedBox(height: 28),
+                Text(
+                  'You May Also Like',
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                _buildRecommendations(movieProvider),
               ],
             ),
           ),
@@ -234,6 +244,39 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
               ],
             ),
           );
+        },
+      ),
+    );
+  }
+
+  Widget _buildRecommendations(MovieProvider provider) {
+    if (provider.isRecommendationsLoading) {
+      return const SizedBox(
+        height: 290,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (provider.recommendations.isEmpty) {
+      return Text(
+        'No recommendations available.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+
+    final recommendationCount = provider.recommendations.length > 10
+        ? 10
+        : provider.recommendations.length;
+
+    return SizedBox(
+      height: 290,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(right: 20),
+        itemCount: recommendationCount,
+        separatorBuilder: (_, index) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          return MovieCard(movie: provider.recommendations[index], width: 150);
         },
       ),
     );
