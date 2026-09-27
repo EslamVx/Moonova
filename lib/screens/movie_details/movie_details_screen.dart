@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../models/movie.dart';
+import '../../providers/movie_details_provider.dart';
 import '../../providers/movie_list_provider.dart';
-import '../../providers/movie_provider.dart';
 import '../../widgets/movie_card.dart';
 
 class MovieDetailsScreen extends StatefulWidget {
@@ -18,14 +18,16 @@ class MovieDetailsScreen extends StatefulWidget {
 }
 
 class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
+  late final MovieDetailsProvider _detailsProvider;
+
   @override
   void initState() {
     super.initState();
 
+    _detailsProvider = MovieDetailsProvider();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<MovieProvider>().loadMovieDetails(widget.movie.id);
-      context.read<MovieProvider>().loadMovieCast(widget.movie.id);
-      context.read<MovieProvider>().loadMovieRecommendations(widget.movie.id);
+      _detailsProvider.loadAll(widget.movie.id);
 
       final user = FirebaseAuth.instance.currentUser;
 
@@ -39,37 +41,46 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final movieProvider = context.watch<MovieProvider>();
-    final movieListProvider = context.watch<MovieListProvider>();
+  void dispose() {
+    _detailsProvider.dispose();
+    super.dispose();
+  }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Movie Details')),
-      body: _buildBody(movieProvider, movieListProvider),
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _detailsProvider,
+      child: Consumer<MovieDetailsProvider>(
+        builder: (context, provider, child) {
+          final movieListProvider = context.watch<MovieListProvider>();
+
+          return Scaffold(
+            appBar: AppBar(title: const Text('Movie Details')),
+            body: _buildBody(provider, movieListProvider),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildBody(
-    MovieProvider movieProvider,
+    MovieDetailsProvider provider,
     MovieListProvider movieListProvider,
   ) {
-    if (movieProvider.isLoadingDetails) {
+    if (provider.isLoadingDetails) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (movieProvider.detailsErrorMessage != null) {
+    if (provider.detailsError != null) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: Text(
-            movieProvider.detailsErrorMessage!,
-            textAlign: TextAlign.center,
-          ),
+          child: Text(provider.detailsError!, textAlign: TextAlign.center),
         ),
       );
     }
 
-    final movie = movieProvider.selectedMovie;
+    final movie = provider.movie;
 
     if (movie == null) {
       return const Center(child: Text('Movie not found'));
@@ -122,9 +133,8 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                     runSpacing: 8,
                     children: movie.genreIds
                         .map(
-                          (genreId) => _buildGenreChip(
-                            movieProvider.getGenreName(genreId),
-                          ),
+                          (genreId) =>
+                              _buildGenreChip(provider.getGenreName(genreId)),
                         )
                         .whereType<Widget>()
                         .toList(),
@@ -153,7 +163,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                _buildCast(movieProvider),
+                _buildCast(provider),
                 const SizedBox(height: 28),
                 Text(
                   'You May Also Like',
@@ -161,7 +171,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                       ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
-                _buildRecommendations(movieProvider),
+                _buildRecommendations(provider),
               ],
             ),
           ),
@@ -170,7 +180,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     );
   }
 
-  Widget _buildCast(MovieProvider provider) {
+  Widget _buildCast(MovieDetailsProvider provider) {
     if (provider.isCastLoading) {
       return const SizedBox(
         height: 250,
@@ -185,16 +195,14 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
       );
     }
 
-    if (provider.movieCast.isEmpty) {
+    if (provider.cast.isEmpty) {
       return Text(
         'No cast information available.',
         style: Theme.of(context).textTheme.bodyMedium,
       );
     }
 
-    final castCount = provider.movieCast.length > 10
-        ? 10
-        : provider.movieCast.length;
+    final castCount = provider.cast.length > 10 ? 10 : provider.cast.length;
 
     return SizedBox(
       height: 250,
@@ -203,7 +211,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
         itemCount: castCount,
         separatorBuilder: (_, index) => const SizedBox(width: 14),
         itemBuilder: (context, index) {
-          final cast = provider.movieCast[index];
+          final cast = provider.cast[index];
 
           return SizedBox(
             width: 120,
@@ -249,7 +257,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
     );
   }
 
-  Widget _buildRecommendations(MovieProvider provider) {
+  Widget _buildRecommendations(MovieDetailsProvider provider) {
     if (provider.isRecommendationsLoading) {
       return const SizedBox(
         height: 290,
