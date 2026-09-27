@@ -23,6 +23,7 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<MovieProvider>().loadMovieDetails(widget.movie.id);
+      context.read<MovieProvider>().loadMovieCast(widget.movie.id);
 
       final user = FirebaseAuth.instance.currentUser;
 
@@ -143,11 +144,105 @@ class _MovieDetailsScreenState extends State<MovieDetailsScreen> {
                   style: Theme.of(context).textTheme.bodyLarge
                       ?.copyWith(height: 1.6),
                 ),
+                const SizedBox(height: 28),
+                Text(
+                  'Cast',
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                _buildCast(movieProvider),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCast(MovieProvider provider) {
+    if (provider.isCastLoading) {
+      return const SizedBox(
+        height: 250,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (provider.castError != null) {
+      return Text(
+        'Failed to load cast.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+
+    if (provider.movieCast.isEmpty) {
+      return Text(
+        'No cast information available.',
+        style: Theme.of(context).textTheme.bodyMedium,
+      );
+    }
+
+    final castCount = provider.movieCast.length > 10
+        ? 10
+        : provider.movieCast.length;
+
+    return SizedBox(
+      height: 250,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: castCount,
+        separatorBuilder: (_, index) => const SizedBox(width: 14),
+        itemBuilder: (context, index) {
+          final cast = provider.movieCast[index];
+
+          return SizedBox(
+            width: 120,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: SizedBox(
+                    width: 120,
+                    height: 170,
+                    child: cast.profilePath != null
+                        ? Image.network(
+                            'https://image.tmdb.org/t/p/w300${cast.profilePath}',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildCastPlaceholder();
+                            },
+                          )
+                        : _buildCastPlaceholder(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  cast.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleSmall
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  cast.character,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildCastPlaceholder() {
+    return Container(
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: const Icon(Icons.person_outline_rounded, size: 42),
     );
   }
 

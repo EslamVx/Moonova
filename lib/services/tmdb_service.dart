@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
+import '../models/cast.dart';
 import '../models/genre.dart';
 import '../models/movie.dart';
 import '../models/movie_response.dart';
@@ -83,5 +84,21 @@ class TmdbService {
     }
 
     throw Exception('Failed to load movie details: ${response.statusCode}');
+  }
+
+  Future<List<Cast>> getMovieCast(int movieId) async {
+    final url = Uri.parse('$_baseUrl/movie/$movieId/credits');
+
+    final response = await http.get(url, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      return (data['cast'] as List? ?? [])
+          .map((actor) => Cast.fromJson(actor))
+          .toList();
+    }
+
+    throw Exception('Failed to load movie cast: ${response.statusCode}');
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/movie_controller.dart';
+import '../models/cast.dart';
 import '../models/genre.dart';
 import '../models/movie.dart';
 
@@ -11,6 +12,7 @@ class MovieProvider extends ChangeNotifier {
   List<Movie> _trendingMovies = [];
   List<Movie> _searchResults = [];
   List<Genre> _genres = [];
+  List<Cast> _movieCast = [];
 
   final Map<int, Movie> _movieCache = {};
 
@@ -20,16 +22,19 @@ class MovieProvider extends ChangeNotifier {
   bool _isSearching = false;
   bool _isLoadingGenres = false;
   bool _isLoadingDetails = false;
+  bool _isCastLoading = false;
 
   String? _errorMessage;
   String? _searchErrorMessage;
   String? _genreErrorMessage;
   String? _detailsErrorMessage;
+  String? _castError;
 
   List<Movie> get popularMovies => _popularMovies;
   List<Movie> get trendingMovies => _trendingMovies;
   List<Movie> get searchResults => _searchResults;
   List<Genre> get genres => _genres;
+  List<Cast> get movieCast => _movieCast;
 
   Movie? get selectedMovie => _selectedMovie;
 
@@ -37,11 +42,13 @@ class MovieProvider extends ChangeNotifier {
   bool get isSearching => _isSearching;
   bool get isLoadingGenres => _isLoadingGenres;
   bool get isLoadingDetails => _isLoadingDetails;
+  bool get isCastLoading => _isCastLoading;
 
   String? get errorMessage => _errorMessage;
   String? get searchErrorMessage => _searchErrorMessage;
   String? get genreErrorMessage => _genreErrorMessage;
   String? get detailsErrorMessage => _detailsErrorMessage;
+  String? get castError => _castError;
 
   Future<void> loadPopularMovies() async {
     _isLoading = true;
@@ -153,6 +160,24 @@ class MovieProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> loadMovieCast(int movieId) async {
+    _isCastLoading = true;
+    _castError = null;
+
+    notifyListeners();
+
+    try {
+      _movieCast = await _controller.getMovieCast(movieId);
+    } catch (e) {
+      _castError = e.toString();
+      _movieCast = [];
+    } finally {
+      _isCastLoading = false;
+
+      notifyListeners();
+    }
+  }
+
   Future<Movie?> fetchMovie(int movieId) async {
     final cachedMovie = _movieCache[movieId];
 
@@ -191,6 +216,8 @@ class MovieProvider extends ChangeNotifier {
 
   void clearSelectedMovie() {
     _selectedMovie = null;
+    _movieCast = [];
+    _castError = null;
     _detailsErrorMessage = null;
 
     notifyListeners();

@@ -1,6 +1,7 @@
 import '../models/genre.dart';
 import '../models/movie.dart';
 import '../models/movie_response.dart';
+import '../models/cast.dart';
 import '../services/tmdb_service.dart';
 
 class MovieController {
@@ -24,5 +25,9 @@ class MovieController {
 
   Future<Movie> getMovieDetails(int movieId) async {
     return await _tmdbService.getMovieDetails(movieId);
+  }
+
+  Future<List<Cast>> getMovieCast(int movieId) async {
+    return await _tmdbService.getMovieCast(movieId);
   }
 }
