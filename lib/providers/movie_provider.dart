@@ -32,6 +32,8 @@ class MovieProvider extends ChangeNotifier {
   String? _detailsErrorMessage;
   String? _castError;
 
+  int _searchRequestId = 0;
+
   List<Movie> get popularMovies => _popularMovies;
   List<Movie> get trendingMovies => _trendingMovies;
   List<Movie> get searchResults => _searchResults;
@@ -94,7 +96,10 @@ class MovieProvider extends ChangeNotifier {
   }
 
   Future<void> searchMovies(String query) async {
-    if (query.trim().isEmpty) {
+    final trimmedQuery = query.trim();
+    final requestId = ++_searchRequestId;
+
+    if (trimmedQuery.isEmpty) {
       clearSearch();
       return;
     }
@@ -105,7 +110,11 @@ class MovieProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await _controller.searchMovies(query.trim());
+      final response = await _controller.searchMovies(trimmedQuery);
+
+      if (requestId != _searchRequestId) {
+        return;
+      }
 
       _searchResults = response.movies;
 
@@ -113,11 +122,17 @@ class MovieProvider extends ChangeNotifier {
         _movieCache[movie.id] = movie;
       }
     } catch (e) {
-      _searchErrorMessage = e.toString();
-    } finally {
-      _isSearching = false;
+      if (requestId != _searchRequestId) {
+        return;
+      }
 
-      notifyListeners();
+      _searchErrorMessage = e.toString();
+      _searchResults = [];
+    } finally {
+      if (requestId == _searchRequestId) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -233,6 +248,7 @@ class MovieProvider extends ChangeNotifier {
   }
 
   void clearSearch() {
+    _searchRequestId++;
     _searchResults = [];
     _searchErrorMessage = null;
     _isSearching = false;
