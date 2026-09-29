@@ -8,7 +8,8 @@ import 'firebase_options.dart';
 import 'providers/auth_provider.dart';
 import 'providers/movie_list_provider.dart';
 import 'providers/movie_provider.dart';
-import 'screens/home/home_screen.dart';
+import 'providers/theme_provider.dart';
+import 'screens/splash/splash_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,7 +18,12 @@ Future<void> main() async {
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(const MoonovaApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(),
+      child: const MoonovaApp(),
+    ),
+  );
 }
 
 class MoonovaApp extends StatelessWidget {
@@ -36,8 +42,8 @@ class MoonovaApp extends StatelessWidget {
         title: 'Moonova',
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        home: const HomeScreen(),
+        themeMode: context.watch<ThemeProvider>().themeMode,
+        home: const SplashScreen(),
       ),
     );
   }

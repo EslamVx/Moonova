@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../providers/auth_provider.dart';
 import '../statistics/statistics_screen.dart';
+import '../settings/settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -80,6 +81,26 @@ class ProfileScreen extends StatelessWidget {
                   },
                   icon: const Icon(Icons.bar_chart_rounded),
                   label: const Text('Your Statistics'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.settings_rounded),
+                  label: const Text('Settings'),
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
