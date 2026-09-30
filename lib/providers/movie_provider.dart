@@ -19,14 +19,16 @@ class MovieProvider extends ChangeNotifier {
 
   Movie? _selectedMovie;
 
-  bool _isLoading = false;
+  bool _isPopularLoading = false;
+  bool _isTrendingLoading = false;
   bool _isSearching = false;
   bool _isRecommendationsLoading = false;
   bool _isLoadingGenres = false;
   bool _isLoadingDetails = false;
   bool _isCastLoading = false;
 
-  String? _errorMessage;
+  String? _popularErrorMessage;
+  String? _trendingErrorMessage;
   String? _searchErrorMessage;
   String? _genreErrorMessage;
   String? _detailsErrorMessage;
@@ -43,22 +45,26 @@ class MovieProvider extends ChangeNotifier {
 
   Movie? get selectedMovie => _selectedMovie;
 
-  bool get isLoading => _isLoading;
+  bool get isPopularLoading => _isPopularLoading;
+  bool get isTrendingLoading => _isTrendingLoading;
+  bool get isLoading => _isPopularLoading || _isTrendingLoading;
   bool get isSearching => _isSearching;
   bool get isRecommendationsLoading => _isRecommendationsLoading;
   bool get isLoadingGenres => _isLoadingGenres;
   bool get isLoadingDetails => _isLoadingDetails;
   bool get isCastLoading => _isCastLoading;
 
-  String? get errorMessage => _errorMessage;
+  String? get popularErrorMessage => _popularErrorMessage;
+  String? get trendingErrorMessage => _trendingErrorMessage;
+  String? get errorMessage => _popularErrorMessage ?? _trendingErrorMessage;
   String? get searchErrorMessage => _searchErrorMessage;
   String? get genreErrorMessage => _genreErrorMessage;
   String? get detailsErrorMessage => _detailsErrorMessage;
   String? get castError => _castError;
 
   Future<void> loadPopularMovies() async {
-    _isLoading = true;
-    _errorMessage = null;
+    _isPopularLoading = true;
+    _popularErrorMessage = null;
 
     notifyListeners();
 
@@ -71,15 +77,20 @@ class MovieProvider extends ChangeNotifier {
         _movieCache[movie.id] = movie;
       }
     } catch (e) {
-      _errorMessage = e.toString();
+      _popularErrorMessage = e.toString();
     } finally {
-      _isLoading = false;
+      _isPopularLoading = false;
 
       notifyListeners();
     }
   }
 
   Future<void> loadTrendingMovies() async {
+    _isTrendingLoading = true;
+    _trendingErrorMessage = null;
+
+    notifyListeners();
+
     try {
       final response = await _controller.getTrendingMovies();
 
@@ -89,10 +100,12 @@ class MovieProvider extends ChangeNotifier {
         _movieCache[movie.id] = movie;
       }
     } catch (e) {
-      _trendingMovies = [];
-    }
+      _trendingErrorMessage = e.toString();
+    } finally {
+      _isTrendingLoading = false;
 
-    notifyListeners();
+      notifyListeners();
+    }
   }
 
   Future<void> searchMovies(String query) async {

@@ -16,6 +16,7 @@ class MovieListProvider extends ChangeNotifier {
   List<UserMovie> _wantToWatch = [];
 
   bool _isLoading = false;
+  String? _error;
 
   UserMovie? get currentMovie => _currentMovie;
 
@@ -25,6 +26,7 @@ class MovieListProvider extends ChangeNotifier {
   List<UserMovie> get wantToWatch => _wantToWatch;
 
   bool get isLoading => _isLoading;
+  String? get error => _error;
 
   MovieListProvider() {
     _auth.authStateChanges().listen((user) {
@@ -38,11 +40,14 @@ class MovieListProvider extends ChangeNotifier {
 
   Future<void> loadUserMovies(String userId) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
       await _controller.loadUserMovies(userId);
       _loadLists(userId);
+    } catch (e) {
+      _error = 'Failed to load your movie library.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -50,9 +55,15 @@ class MovieListProvider extends ChangeNotifier {
   }
 
   void loadMovie({required String userId, required int movieId}) {
-    _currentMovie = _controller.getMovie(movieId, userId);
-    _loadLists(userId);
-    notifyListeners();
+    try {
+      _error = null;
+      _currentMovie = _controller.getMovie(movieId, userId);
+      _loadLists(userId);
+      notifyListeners();
+    } catch (e) {
+      _error = 'Failed to load movie data.';
+      notifyListeners();
+    }
   }
 
   void _loadLists(String userId) {
@@ -109,7 +120,6 @@ class MovieListProvider extends ChangeNotifier {
     );
 
     await _controller.updateMovie(_currentMovie!);
-
     _loadLists(_currentMovie!.userId);
     notifyListeners();
   }
@@ -148,13 +158,11 @@ class MovieListProvider extends ChangeNotifier {
     if (user == null) return;
 
     final movie = _controller.getMovie(movieId, user.uid);
-
     final updatedMovie = update(movie);
 
     await _controller.updateMovie(updatedMovie);
 
     _loadLists(user.uid);
-
     notifyListeners();
   }
 
@@ -166,7 +174,6 @@ class MovieListProvider extends ChangeNotifier {
     await _controller.removeMovie(user.uid, movieId);
 
     _loadLists(user.uid);
-
     notifyListeners();
   }
 
@@ -177,6 +184,7 @@ class MovieListProvider extends ChangeNotifier {
     _watching = [];
     _wantToWatch = [];
     _isLoading = false;
+    _error = null;
 
     notifyListeners();
   }

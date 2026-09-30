@@ -5,8 +5,11 @@ import '../../models/movie.dart';
 import '../../models/user_movie.dart';
 import '../../providers/movie_list_provider.dart';
 import '../../providers/movie_provider.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/error_state.dart';
+import '../../widgets/loading_state.dart';
 import '../../widgets/movie_card.dart';
-import 'library_screen.dart';
+import 'library_type.dart';
 
 class LibraryMovieListScreen extends StatefulWidget {
   final String title;
@@ -26,6 +29,7 @@ class _LibraryMovieListScreenState extends State<LibraryMovieListScreen> {
   final List<Movie> _movies = [];
 
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -37,36 +41,51 @@ class _LibraryMovieListScreenState extends State<LibraryMovieListScreen> {
   }
 
   Future<void> _loadMovies() async {
-    final movieListProvider = context.read<MovieListProvider>();
-    final movieProvider = context.read<MovieProvider>();
-
-    final userMovies = _getUserMovies(movieListProvider);
-    final movies = <Movie>[];
-
-    for (final userMovie in userMovies) {
-      final cachedMovie = movieProvider.getMovieFromCache(userMovie.movieId);
-
-      if (cachedMovie != null) {
-        movies.add(cachedMovie);
-        continue;
-      }
-
-      final movie = await movieProvider.fetchMovie(userMovie.movieId);
-
-      if (movie != null) {
-        movies.add(movie);
-      }
-    }
-
     if (!mounted) return;
 
     setState(() {
-      _movies
-        ..clear()
-        ..addAll(movies);
-
-      _isLoading = false;
+      _isLoading = true;
+      _error = null;
     });
+
+    try {
+      final movieListProvider = context.read<MovieListProvider>();
+      final movieProvider = context.read<MovieProvider>();
+
+      final userMovies = _getUserMovies(movieListProvider);
+      final movies = <Movie>[];
+
+      for (final userMovie in userMovies) {
+        final cachedMovie = movieProvider.getMovieFromCache(userMovie.movieId);
+
+        if (cachedMovie != null) {
+          movies.add(cachedMovie);
+          continue;
+        }
+
+        final movie = await movieProvider.fetchMovie(userMovie.movieId);
+
+        if (movie != null) {
+          movies.add(movie);
+        }
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _movies
+          ..clear()
+          ..addAll(movies);
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+        _error = 'Failed to load your movies.';
+      });
+    }
   }
 
   List<UserMovie> _getUserMovies(MovieListProvider provider) {
@@ -85,33 +104,42 @@ class _LibraryMovieListScreenState extends State<LibraryMovieListScreen> {
   Future<void> _removeMovie(Movie movie) async {
     final provider = context.read<MovieListProvider>();
 
-    switch (widget.type) {
-      case LibraryType.favorite:
-        await provider.removeFromFavorites(movie.id);
-        break;
-      case LibraryType.watched:
-        await provider.removeFromWatched(movie.id);
-        break;
-      case LibraryType.watching:
-        await provider.removeFromWatching(movie.id);
-        break;
-      case LibraryType.wantToWatch:
-        await provider.removeFromWantToWatch(movie.id);
-        break;
+    try {
+      switch (widget.type) {
+        case LibraryType.favorite:
+          await provider.removeFromFavorites(movie.id);
+          break;
+        case LibraryType.watched:
+          await provider.removeFromWatched(movie.id);
+          break;
+        case LibraryType.watching:
+          await provider.removeFromWatching(movie.id);
+          break;
+        case LibraryType.wantToWatch:
+          await provider.removeFromWantToWatch(movie.id);
+          break;
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        _movies.removeWhere((item) => item.id == movie.id);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Removed from ${widget.title}'),
+          duration: const Duration(seconds: 2),
+          action: SnackBarAction(label: 'OK', onPressed: () {}),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to remove movie.')));
     }
-
-    if (!mounted) return;
-
-    setState(() {
-      _movies.removeWhere((item) => item.id == movie.id);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Removed from ${widget.title}'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   @override
@@ -124,15 +152,23 @@ class _LibraryMovieListScreenState extends State<LibraryMovieListScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const LoadingState(message: 'Loading your movies...');
+    }
+
+    if (_error != null) {
+      return ErrorState(message: _error!, onRetry: _loadMovies);
     }
 
     if (_movies.isEmpty) {
-      return const Center(child: Text('No movies in this list'));
+      return EmptyState(
+        title: 'No movies here yet',
+        message: _getEmptyMessage(),
+        icon: _getEmptyIcon(),
+      );
     }
 
     return GridView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       itemCount: _movies.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -162,14 +198,40 @@ class _LibraryMovieListScreenState extends State<LibraryMovieListScreen> {
     return Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Colors.red.withValues(alpha: 0.12),
+        color: Theme.of(context).colorScheme.error.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(14),
       ),
-      child: const Icon(
+      child: Icon(
         Icons.delete_outline_rounded,
-        color: Colors.red,
+        color: Theme.of(context).colorScheme.error,
         size: 32,
       ),
     );
+  }
+
+  String _getEmptyMessage() {
+    switch (widget.type) {
+      case LibraryType.favorite:
+        return 'Movies you love will appear here.';
+      case LibraryType.watched:
+        return 'Movies you have watched will appear here.';
+      case LibraryType.watching:
+        return 'Movies you are watching will appear here.';
+      case LibraryType.wantToWatch:
+        return 'Movies you want to watch will appear here.';
+    }
+  }
+
+  IconData _getEmptyIcon() {
+    switch (widget.type) {
+      case LibraryType.favorite:
+        return Icons.favorite_outline_rounded;
+      case LibraryType.watched:
+        return Icons.visibility_outlined;
+      case LibraryType.watching:
+        return Icons.play_circle_outline_rounded;
+      case LibraryType.wantToWatch:
+        return Icons.bookmark_outline_rounded;
+    }
   }
 }
